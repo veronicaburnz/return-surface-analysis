@@ -1,0 +1,30 @@
+---
+name: return-surface-analysis
+description: "Review the return surface of a boundary-crossing operation. Use after identifying a proxy, transform, delegation, model tool call, fetch, build, event, authentication flow, or multi-zone operation where something comes back."
+---
+
+# Return Surface Analysis
+
+Use this heuristic to review the return direction of a boundary-crossing operation.
+
+## Heuristic
+
+When a system validates the forward path more rigorously than the return path, the less-validated return path should be treated as a distinct attack surface.
+
+## Procedure
+
+1. Identify the intermediary.
+2. Inventory returned values.
+3. Compare forward-path controls against return-path controls.
+4. Locate return sinks.
+5. Test concrete impact.
+6. Separate findings from observations.
+7. Remediate by treating returned data as untrusted input at the next boundary.
+
+## Output labels
+
+- `PROVEN`: reachable attacker-influenced return path crosses a trust boundary and reaches a sensitive sink with concrete impact.
+- `RISK`: return path appears under-specified or under-validated, but exploitability or impact is not established.
+- `REJECT`: return path is sufficiently constrained, lacks attacker influence, lacks a meaningful boundary, or lacks a sensitive sink.
+
+See `docs/return-surface-analysis.md` for the full method.

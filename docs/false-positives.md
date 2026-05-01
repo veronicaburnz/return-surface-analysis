@@ -1,0 +1,84 @@
+# False Positives and Non-Findings
+
+A trust differential is not automatically a vulnerability.
+
+This file exists to keep Return Surface Analysis focused on evidence-backed findings rather than speculative reports.
+
+## Common non-findings
+
+### 1. The result is discarded
+
+If the returned value is not exposed, interpreted, cached, logged, or used to affect state, the differential may not matter.
+
+### 2. The result stays in the same trust zone
+
+If the returned value never crosses a meaningful boundary, impact may be absent.
+
+### 3. The result is strongly typed and validated
+
+If the return path has explicit schema validation, metadata allowlisting, contextual encoding, and strict sink handling, the differential may be low.
+
+### 4. The attacker cannot influence the returned value
+
+If the source and result are not attacker-influenced, the path may still be worth documenting, but exploitability is weaker.
+
+### 5. The dangerous part is stripped
+
+Examples:
+
+- response body is discarded,
+- response headers are stripped,
+- errors are normalized,
+- redirects are disabled,
+- only a boolean or fixed enum is returned,
+- returned claims are validated against issuer, audience, expiry, nonce, and signature.
+
+### 6. The sink is inert
+
+A value rendered as escaped text is not equivalent to a value interpreted as HTML, JavaScript, shell, SQL, Markdown, prompt instructions, policy, or executable artifact.
+
+### 7. Equivalent downstream controls exist
+
+The return path may look under-validated at one layer but be constrained by a later layer. Verify the whole path before reporting.
+
+## Common overclaims
+
+Avoid these claims unless they are proven:
+
+- "This is SSRF" when only a constrained fetch exists.
+- "This is RCE" when code execution is not reachable.
+- "This is prompt injection" when returned text cannot affect model behavior or later tool use.
+- "This is cache poisoning" when shared cache state cannot be modified.
+- "This leaks secrets" when only public or attacker-provided data is returned.
+- "This bypasses auth" when authorization is checked again before exposure.
+- "This is supply-chain compromise" when an artifact is unverified but not attacker-controllable.
+
+## Good downgraded language
+
+Use precise language when exploitability is incomplete.
+
+```text
+The return path appears under-specified and may be worth hardening.
+```
+
+```text
+The current evidence supports a design risk, not a confirmed vulnerability.
+```
+
+```text
+The forward path has stronger controls than the return path, but I have not established attacker influence over the returned value.
+```
+
+```text
+This should be treated as a candidate finding pending confirmation of sink behavior.
+```
+
+## Finding threshold
+
+A strong return-surface report should prove:
+
+```text
+attacker influence + boundary crossing + insufficient return controls + sensitive sink + concrete impact
+```
+
+If the chain is incomplete, call it a risk, not a vulnerability.

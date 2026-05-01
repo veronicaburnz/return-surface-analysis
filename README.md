@@ -1,0 +1,254 @@
+> [!WARNING]
+>
+> ## Research and Educational Use Only
+>
+> This project is intended for research, education, defensive review, and authorized testing.
+>
+> Do not apply these techniques to live services, production systems, third-party infrastructure, or systems you do not own, unless the system owner has explicitly authorized this exact type of testing.
+>
+> Prefer isolated labs, local test environments, intentionally vulnerable applications, and controlled review environments. If you find a real vulnerability, follow coordinated disclosure and avoid publishing exploit details before remediation.
+
+# Return Surface Analysis
+
+**Find the attack surface on the path back.**
+
+Return Surface Analysis is a defensive security review heuristic for finding risk in the less-analyzed direction of a system: the path by which data, metadata, errors, artifacts, or tool output returns from a boundary-crossing operation.
+
+Most systems validate the forward path because it is explicit: request input, API parameters, outbound hostnames, tool arguments, event payloads, dependency versions.
+
+The return path is often implicit: response bodies, headers, errors, generated artifacts, tool results, refresh tokens, cache entries, and handler outputs.
+
+This repository provides a repeatable checklist for identifying trust differentials between the forward path and return path, assessing risk, separating findings from non-findings, and choosing remediation patterns.
+
+## The heuristic
+
+When a system validates the forward path more rigorously than the return path, the less-validated return path should be treated as a distinct attack surface.
+
+Return-path risk tends to increase with:
+
+1. the difference in validation rigor,
+2. the sensitivity of the boundary crossed,
+3. the number and privilege of consumers exposed to the returned data,
+4. whether returned data is rendered, parsed, cached, trusted, or executed.
+
+This is a heuristic, not a theorem and not a substitute for a full threat model. It is useful because it directs attention to a class of mistakes that forward-path analysis often misses.
+
+## Use cases
+
+Return Surface Analysis is useful when reviewing:
+
+- web proxies and SSRF mitigations,
+- API gateways and error handling,
+- LLM agents and tool outputs,
+- event systems and handler return values,
+- build systems and generated artifacts,
+- authentication and token delegation flows,
+- caches, renderers, parsers, and other trust-boundary crossings.
+
+## Intuitive example
+
+A common mistake is treating database output as trusted because the current request path is safe.
+
+Imagine an API endpoint like this:
+
+```text
+GET /users/:id
+```
+
+The request comes in. The service validates the `id` parameter carefully:
+
+- it must be an integer,
+- it must belong to the authenticated tenant,
+- it is passed through a parameterized query,
+- authorization is checked before the query runs.
+
+The forward path looks solid.
+
+```text
+request parameter -> validation -> authorization -> parameterized query -> database
+```
+
+But then the response comes back:
+
+```text
+database row -> JSON response -> frontend render
+```
+
+And that return path may receive almost no scrutiny.
+
+The mistake is assuming:
+
+```text
+"It came from our database, so it is trusted."
+```
+
+That assumption can be wrong.
+
+The database may contain data written months ago by an older vulnerable version of the application. Maybe a previous bug allowed unsafe HTML, malformed JSON fragments, dangerous URLs, serialized objects, prompt-injection text, or unexpected metadata to be stored. The bug was later patched, so new writes are clean, but the old contaminated rows remain.
+
+The current version validates new request parameters. It does not necessarily validate old data coming back.
+
+So the real flow is:
+
+```text
+old attack request -> stale stored data -> later safe-looking API request -> unvalidated response -> vulnerable sink
+```
+
+The vulnerable moment is not the current request going into the database.
+The vulnerable moment is stale attacker-influenced data coming back out.
+
+Return Surface Analysis asks:
+
+> What comes back, where does it go, and what does the system assume about it?
+
+In this case, the return surface includes:
+
+- database fields returned to the API,
+- JSON serialization boundaries,
+- frontend rendering sinks,
+- caches populated from the response,
+- logs or analytics pipelines consuming the data,
+- downstream services that treat the returned fields as trusted.
+
+The fix is not only “validate inputs.” The fix is to treat returned data as untrusted at every new boundary:
+
+- encode output for the sink where it will be used,
+- validate stored records before reuse,
+- migrate or quarantine legacy contaminated data,
+- enforce schemas on returned objects,
+- avoid rendering database content as executable or interpretable content,
+- add detection for old rows that violate current invariants.
+
+The forward path may be patched.
+The return path may still be carrying the past.
+
+## Operating procedure
+
+### 0. Identify the intermediary
+
+Look for operations with this shape:
+
+```text
+input -> action(derived_from_input) -> process(result) -> output
+```
+
+The `action` crosses a boundary: network, process, tenant, privilege level, trust zone, model context, filesystem, cache, parser, renderer, or build stage.
+
+### 1. Measure the trust differential
+
+Compare how the forward path is handled against how the return path is handled.
+
+| Dimension      | Forward path                                            | Return path                                                         | Question                                                    |
+| -------------- | ------------------------------------------------------- | ------------------------------------------------------------------- | ----------------------------------------------------------- |
+| Validation     | Is input schema-checked, type-checked, or allowlisted?  | Is returned data validated?                                         | Is the result constrained before use?                       |
+| Sanitization   | Is input escaped, encoded, or filtered?                 | Is output escaped, encoded, or filtered?                            | Is sanitization contextual to the sink?                     |
+| Access control | Are auth, scope, rate limit, or tenancy checks applied? | Is result exposure gated?                                           | Can returned data reach a broader or higher-trust audience? |
+| Logging        | Is input audited or measured?                           | Is the return path logged?                                          | Would defenders see abuse on the return side?               |
+| Interpretation | Is input treated as data?                               | Is returned content parsed, rendered, cached, trusted, or executed? | Does the return path upgrade data into authority?           |
+
+A high trust differential exists when the forward path is carefully constrained but the return path is assumed safe.
+
+### 2. Trace the high-differential direction
+
+For each returned value, ask:
+
+| Check            | Question                                                                                                |
+| ---------------- | ------------------------------------------------------------------------------------------------------- |
+| Proxying         | Is the result forwarded to the original caller or another user?                                         |
+| Metadata copying | Are headers, status codes, claims, labels, or other metadata copied?                                    |
+| Trust assumption | Does the code treat the result as if it came from a trusted source?                                     |
+| Zone crossing    | Does returned data cross from lower-trust to higher-trust context?                                      |
+| Error leakage    | Do errors reveal secrets, topology, stack traces, paths, or internal state?                             |
+| State pollution  | Can the result affect cache, config, database state, model context, environment, or build output?       |
+| Interpretation   | Is the result parsed, rendered, compiled, executed, deserialized, or injected into another interpreter? |
+
+### 3. Assess risk
+
+Use the scoring rubric in [`docs/scoring.md`](docs/scoring.md) for triage.
+
+Do not treat a trust differential as a vulnerability by itself. A reportable finding usually requires a reachable path, a meaningful trust boundary, and a concrete impact.
+
+## Cross-domain examples
+
+| Domain          | Designed path                                 | Emergent return path                                  | Trust differential                                                             |
+| --------------- | --------------------------------------------- | ----------------------------------------------------- | ------------------------------------------------------------------------------ |
+| Web security    | Outbound request target is allowlisted        | Response body or headers are proxied to client        | Target selection is constrained, but returned content is trusted               |
+| API design      | Request schema is validated                   | Error response is unstructured and leaks internals    | Request format is contractual, but error format is ad hoc                      |
+| Databases       | Query parameters are escaped or parameterized | Result set is rendered without contextual encoding    | Query is protected, but stored content is trusted                              |
+| LLM tool calls  | Tool input is validated against schema        | Tool output is injected into the model context        | Tool invocation is constrained, but returned text becomes instruction-adjacent |
+| Event systems   | Event payload is validated on publish         | Handler return value is propagated without validation | Publish path is gated, but handler output is assumed benign                    |
+| Build systems   | Dependency versions and hashes are locked     | Generated artifacts are used without integrity checks | Inputs are pinned, but outputs are trusted because they came from the build    |
+| Auth delegation | Outbound token request uses scoped parameters | Token response is accepted without validating claims  | Request is constrained, but returned authority is trusted                      |
+
+## Detection signals
+
+Look for code or design patterns like:
+
+```text
+input is allowlisted               -> returned output is unfiltered
+input goes through middleware      -> output bypasses middleware
+input is logged                    -> return path is not logged
+input has a concrete type/schema   -> output is any/string/blob
+input errors are handled carefully -> output errors are passed through
+request metadata is stripped       -> response metadata is copied
+tool arguments are validated       -> tool result is injected verbatim
+```
+
+A compact review rule:
+
+```text
+If the system validates what goes out more than what comes back,
+review what comes back as attacker-influenced input.
+```
+
+## Anti-patterns
+
+| Claim                                      | Failure mode                  | Better framing                                                                                               |
+| ------------------------------------------ | ----------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| "I already analyzed this."                 | Directional blindness         | You analyzed the forward path. The return path is a separate path.                                           |
+| "The response is from an internal source." | Trust transitivity assumption | The request went where the system allowed or where the user influenced. The response still needs validation. |
+| "It's just a passthrough."                 | Passthrough fallacy           | Passthrough means little or no return-path enforcement. That may be the issue.                               |
+| "The format is validated."                 | Format/content conflation     | Content-Type and schema checks do not guarantee safe semantics at the sink.                                  |
+| "The response is sanitized."               | Sanitization scope error      | Sanitization must match the sink: HTML, header, JSON, shell, SQL, prompt, cache, parser, or model context.   |
+
+## What is in this repository
+
+- [`docs/return-surface-analysis.md`](docs/return-surface-analysis.md): full method
+- [`docs/scoring.md`](docs/scoring.md): practical triage rubric
+- [`docs/false-positives.md`](docs/false-positives.md): when not to report
+- [`docs/remediation-patterns.md`](docs/remediation-patterns.md): mitigation patterns
+- [`docs/domain-checklists.md`](docs/domain-checklists.md): domain-specific review prompts
+- [`docs/release-checklist.md`](docs/release-checklist.md): publication checklist
+- [`docs/trace-return-path.md`](docs/trace-return-path.md): legacy-name redirect for the older working title
+- [`examples/web-proxy.md`](examples/web-proxy.md): proxy and SSRF-style return path
+- [`examples/llm-tool-output.md`](examples/llm-tool-output.md): LLM tool output as untrusted input
+- [`examples/api-error-leakage.md`](examples/api-error-leakage.md): structured input, unstructured errors
+- [`examples/build-artifact-integrity.md`](examples/build-artifact-integrity.md): build outputs and artifact trust
+
+See [`MANIFEST.md`](MANIFEST.md) for the complete archive contents.
+
+## Responsible use
+
+This project is intended for defensive review, authorized testing, secure design analysis, and vulnerability triage.
+
+Do not test systems you do not own or have permission to assess. If return-path analysis reveals a vulnerability in a third-party system, follow coordinated disclosure and avoid publishing exploit details until the affected party has had a reasonable opportunity to investigate and remediate.
+
+## Status
+
+Version: `0.1.0`
+
+This heuristic is intentionally small. It should be easy to apply, easy to falsify, and easy to improve.
+
+## License
+
+MIT. See [`LICENSE`](LICENSE).
+
+## AI Assistance and Disclosure
+
+This project was developed with AI assistance.
+
+The Return Surface Analysis skill and supporting materials were generated, edited, and reviewed with the help of AI systems. The methodology has been tested against synthetic examples, review scenarios, and adversarial prompts to evaluate whether it produces consistent and useful security-review guidance.
+
+Reports or examples produced from this methodology may be AI-generated or AI-assisted unless otherwise stated. AI-generated analysis should be treated as a review aid, not as an authoritative security determination.
+
+All findings should be independently validated by a qualified human reviewer before being used in vulnerability reports, production security decisions, public disclosures, or remediation planning.

@@ -1,0 +1,19 @@
+cff-version: 1.2.0
+title: "Return Surface Analysis"
+message: "If you use this security review heuristic, please cite the repository."
+type: software
+version: 0.1.0
+date-released: 2026-05-01
+abstract: "A defensive security review heuristic for identifying trust differentials between forward paths and return paths in boundary-crossing systems."
+license: MIT
+authors:
+  - name: "Veronica Burnz"
+repository-code: "https://github.com/veronicaburnz/return-surface-analysis"
+keywords:
+  - security
+  - threat-modeling
+  - secure-design
+  - output-validation
+  - return-surface-analysis
+  - return-path-analysis
+  - llm-security

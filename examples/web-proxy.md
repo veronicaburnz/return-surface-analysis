@@ -1,0 +1,72 @@
+# Example: Web Proxy Return Surface
+
+## Scenario
+
+A server accepts a user-influenced URL or resource identifier, validates the destination, fetches the upstream resource, and returns the result to the user.
+
+```text
+user input -> server-side fetch -> upstream response -> client response
+```
+
+## Forward path controls
+
+The system may validate:
+
+- hostname,
+- scheme,
+- port,
+- IP address range,
+- redirects,
+- request method,
+- request headers,
+- timeout.
+
+## Return surface
+
+The result may include:
+
+- response body,
+- response headers,
+- status code,
+- content type,
+- redirect metadata,
+- error message,
+- cache headers,
+- timing behavior.
+
+## Trust differential
+
+The outbound destination may be constrained, while returned body and metadata are copied to the client with fewer controls.
+
+## Candidate impact
+
+Depending on sink behavior, this can produce:
+
+- content injection,
+- header confusion,
+- cache poisoning,
+- internal error leakage,
+- cross-user response influence,
+- browser interpretation surprises.
+
+## Review questions
+
+```text
+[ ] Are upstream headers copied directly?
+[ ] Is Content-Type pinned by the intermediary?
+[ ] Are cache headers controlled by the intermediary?
+[ ] Are redirects followed after initial validation?
+[ ] Are response size and stream duration bounded?
+[ ] Can one user's fetch influence another user's cached response?
+[ ] Are upstream errors normalized?
+```
+
+## Safer design
+
+- Strip upstream headers by default.
+- Allowlist only necessary headers.
+- Set Content-Type explicitly.
+- Set cache policy explicitly.
+- Bound body size and stream duration.
+- Normalize errors.
+- Avoid shared caching for attacker-influenced upstream responses.

@@ -1,0 +1,92 @@
+# Domain Checklists
+
+Use these as targeted prompts while applying Return Surface Analysis.
+
+## Web proxy or server-side fetch
+
+```text
+[ ] Is the outbound target constrained?
+[ ] Are redirects constrained?
+[ ] Are DNS rebinding and address-space changes handled?
+[ ] Are returned headers stripped or allowlisted?
+[ ] Is Content-Type set by the intermediary?
+[ ] Is body size bounded?
+[ ] Are errors normalized?
+[ ] Can returned data enter a shared cache?
+[ ] Can one user influence what another user receives?
+[ ] Is the returned content rendered, downloaded, or interpreted by the browser?
+```
+
+## API gateway
+
+```text
+[ ] Are backend errors normalized?
+[ ] Are internal headers stripped?
+[ ] Are status codes mapped intentionally?
+[ ] Are schema violations handled consistently?
+[ ] Are stack traces suppressed externally?
+[ ] Are response schemas enforced?
+[ ] Can backend metadata alter client behavior?
+[ ] Can one backend response poison shared state?
+```
+
+## LLM tool use
+
+```text
+[ ] Are tool outputs treated as untrusted data?
+[ ] Can tool output become instruction text?
+[ ] Is provenance preserved?
+[ ] Is output length bounded?
+[ ] Can output trigger later tool calls?
+[ ] Can output enter memory?
+[ ] Are sensitive actions gated by user intent?
+[ ] Are tool results isolated from system/developer instructions?
+[ ] Can retrieved text alter policy, identity, or authority?
+```
+
+## Event systems
+
+```text
+[ ] Are handler return values typed and validated?
+[ ] Can handler output fan out to other subscribers?
+[ ] Can a low-trust event cause high-trust state changes through a return value?
+[ ] Are failed handler results normalized?
+[ ] Is return-path telemetry visible?
+[ ] Can replayed events produce persistent return-side state?
+```
+
+## Build systems
+
+```text
+[ ] Are generated artifacts hashed?
+[ ] Are artifacts signed?
+[ ] Is provenance recorded?
+[ ] Are generated outputs scanned?
+[ ] Are deployment inputs verified independently?
+[ ] Are promotion paths restricted?
+[ ] Can build output modify later build input?
+[ ] Can one branch, fork, or PR influence artifacts used elsewhere?
+```
+
+## Authentication and delegation
+
+```text
+[ ] Are returned tokens signature-validated?
+[ ] Are issuer, audience, expiry, not-before, nonce, and state validated?
+[ ] Are unexpected claims rejected?
+[ ] Is returned authority bound to the initiating request?
+[ ] Are refresh responses validated as strictly as initial responses?
+[ ] Can metadata discovery responses influence trust without pinning or validation?
+[ ] Are token errors normalized before exposure?
+```
+
+## Databases and stored content
+
+```text
+[ ] Are query inputs parameterized?
+[ ] Are returned records contextually encoded before rendering?
+[ ] Can stored content become HTML, Markdown, shell, SQL, or prompt text?
+[ ] Is authorization rechecked after data retrieval?
+[ ] Can one tenant influence another tenant's returned results?
+[ ] Are database errors normalized?
+```

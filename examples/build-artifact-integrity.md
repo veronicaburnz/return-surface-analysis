@@ -1,0 +1,70 @@
+# Example: Build Artifact Integrity Return Surface
+
+## Scenario
+
+A build system pins dependency versions and verifies source inputs, then uses generated artifacts in later packaging, deployment, or release stages.
+
+```text
+verified inputs -> build process -> generated artifact -> deploy/release
+```
+
+## Forward path controls
+
+The system may validate:
+
+- dependency versions,
+- lockfiles,
+- source branch,
+- commit signature,
+- CI permissions,
+- build environment.
+
+## Return surface
+
+The build result may include:
+
+- binary artifact,
+- package archive,
+- generated source,
+- container image,
+- SBOM,
+- provenance metadata,
+- logs,
+- release notes,
+- deployment manifest.
+
+## Trust differential
+
+Inputs are pinned and reviewed, but outputs may be trusted because they came from the build.
+
+## Candidate impact
+
+Depending on pipeline design, this can produce:
+
+- artifact tampering,
+- unreviewed generated code promotion,
+- poisoned deployment manifests,
+- cross-branch artifact reuse,
+- release of artifacts not bound to the reviewed source.
+
+## Review questions
+
+```text
+[ ] Are artifacts hashed after generation?
+[ ] Are artifacts signed?
+[ ] Is provenance attached and verified?
+[ ] Can untrusted branches produce reusable artifacts?
+[ ] Are deploy-stage policies independent of build-stage policies?
+[ ] Can generated files modify later build inputs?
+[ ] Are logs and release metadata treated as untrusted outputs?
+```
+
+## Safer design
+
+- Sign artifacts.
+- Verify artifacts before promotion.
+- Store provenance.
+- Separate build and deploy permissions.
+- Avoid reusing artifacts across trust zones.
+- Require deploy-stage policy checks.
+- Use reproducible builds where practical.

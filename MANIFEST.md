@@ -1,0 +1,57 @@
+# Manifest
+
+This file lists the contents expected in the release archive.
+
+```text
+.github/ISSUE_TEMPLATE/config.yml
+.github/ISSUE_TEMPLATE/improvement.md
+.github/ISSUE_TEMPLATE/methodology_question.md
+.gitignore
+CHANGELOG.md
+CITATION.cff
+CODE_OF_CONDUCT.md
+CONTRIBUTING.md
+LICENSE
+README.md
+SECURITY.md
+docs/domain-checklists.md
+docs/false-positives.md
+docs/release-checklist.md
+docs/remediation-patterns.md
+docs/return-surface-analysis.md
+docs/scoring.md
+docs/trace-return-path.md
+examples/api-error-leakage.md
+examples/build-artifact-integrity.md
+examples/llm-tool-output.md
+examples/web-proxy.md
+return-surface-analysis.skill.md
+```
+
+## SHA-256 checksums
+
+| File | SHA-256 |
+|---|---|
+| `.github/ISSUE_TEMPLATE/config.yml` | `82a373d1bcef5525ef7817b7dd44276426428360b7032ea9640a066972f7955e` |
+| `.github/ISSUE_TEMPLATE/improvement.md` | `e97af9a9887931e25b97db7cdee8d224da2eda50098ff098c6f2eae7470970a7` |
+| `.github/ISSUE_TEMPLATE/methodology_question.md` | `2779566a7f6ebcbc19c75d98c15ace40e5362e010a6748ea9f233fc685a070a3` |
+| `.gitignore` | `e622583283d4e0d5a0e3b57bcdd56d4e40129a92a82f52ef58f89e5fb93f4f78` |
+| `CHANGELOG.md` | `153329ec5d1887d3f284e4917d17bf74657ee7715bd68c0fe9eb0c6ea9a4cd01` |
+| `CITATION.cff` | `0a6e44c9da8faccbb6cf70fa911d6bfc9060990a1e4abbb40cb80d6de849f199` |
+| `CODE_OF_CONDUCT.md` | `f6028f23a4d25b8420218f1be21152e2baa33c2ffce06cdc650ec9368ff2e4b7` |
+| `CONTRIBUTING.md` | `3a752b9589da3815cd4188e872b4f085e784b9be7455b5a56cf1fa755b9f7f15` |
+| `LICENSE` | `3d9685342ea6ef1a6e2f4a58cabba83b856c75623ed8862470aff97037aceb48` |
+| `README.md` | `0725393c928ad3c556224ef39415bad55f950091b473d7c4779d27bf46302d90` |
+| `SECURITY.md` | `304e09c4e2cddc22a8e06441ef6456f9747c7b15868f42cbf4d9f165aee1b560` |
+| `docs/domain-checklists.md` | `57362bf37c679c039435e6d8990a61a74518d87cad9fc09464e4c47484caba6c` |
+| `docs/false-positives.md` | `2d4bb23ea58ebfd9f9bb8213cd83d17785506d358e41e9ae919cd498e14f9666` |
+| `docs/release-checklist.md` | `665688dedd22f46286df8a03cbf877d7ade3334aeb6e577fe1c05b7ffdc4a31e` |
+| `docs/remediation-patterns.md` | `f98b4c8e07db926cc2a12fb0214b9bb82fb9af77f9448be7ce91544a7f00742a` |
+| `docs/return-surface-analysis.md` | `0f99b0e79359018e4288183ebc3ee93f63246e4aa7fa0c38bfc356c6e1b09720` |
+| `docs/scoring.md` | `01d9a14bbab2bc231af88f3641b5a251243325f7a08a5cf0b512c52e5062f316` |
+| `docs/trace-return-path.md` | `0cff2ed622ed3e1d1b5ba681dce886f20ea01885f3ea5f1ca3c518721cba696c` |
+| `examples/api-error-leakage.md` | `f15475bd6a67a7a34bc4564ef7911547a897558c3c11a473f38a054fba07bae8` |
+| `examples/build-artifact-integrity.md` | `9a02ad78b7c3a17c46ffda303cf4c5388520480123ebb032655518d9484e8625` |
+| `examples/llm-tool-output.md` | `9b1235a877b1b19703818798c501bc93409ced04fd603622ac74a0174085103a` |
+| `examples/web-proxy.md` | `36722fa1db7aa9230b307a7c20a5dd2cbb471af727e7ae3f0e29bb30ec46a14c` |
+| `return-surface-analysis.skill.md` | `c4d345bcc7a147daeea4fab4c5585c633b3360172376868f94fdd24ffd9c0322` |
