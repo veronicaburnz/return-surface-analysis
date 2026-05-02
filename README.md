@@ -235,7 +235,8 @@ Do not test systems you do not own or have permission to assess. If return-path 
 
 ## Status
 
-Version: `0.1.0`
+Version: `0.1.0` with disclosure analysis with prose and synthetic examples for clarity.
+Awaiting Release: Reproduction and eval data including impact to frontier models.
 
 This heuristic is intentionally small. It should be easy to apply, easy to falsify, and easy to improve.
 
